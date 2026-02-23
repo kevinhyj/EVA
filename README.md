@@ -6,6 +6,19 @@ The system supports two primary modes: **Generation** (creating new sequences) a
 
 ---
 
+## Data Availability
+
+Some large files are not included in this repository due to size constraints. The following data can be downloaded from Zenodo:
+
+- `docs/` — Documentation files
+- `reference/` — Reference data
+- `checkpoint/` — Model checkpoints
+- `eva_latest.tar` — Pre-built EVA Docker image
+- `notebooks/interpretability_analysis/intermediate_data/*.npz` — Precomputed activation data
+- `notebooks/tools/visualization/UMAP/taxid_phylum_mapping.json` — Taxonomy mapping data
+
+---
+
 ## Table of Contents
 
 - [Running the Scripts](#running-the-scripts)
