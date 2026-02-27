@@ -13,6 +13,8 @@
 - **Two generation modes**: autoregressive CLM for de novo sequence design, and GLM (masked infilling) for targeted region redesign.
 - **Fine-tuning** support is coming soon.
 
+For more information about our team, EV2 plans, and online model access, please visit our [website](http://223.109.239.35:3001/).
+
 For instructions, details, and examples, please refer to our [technical report](TODO).
 
 For checkpoints, please refer to our [Hugging Face](https://huggingface.co/yanjiehuang/EVA1).
