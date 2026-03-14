@@ -40,13 +40,13 @@ def parse_args():
     )
 
     # Input/Output
-    parser.add_argument("--input", "-i", type=str, required=True,
+    parser.add_argument("--input", "-i", type=str, default=None,
                         help="Input FASTA file with single RNA sequence")
-    parser.add_argument("--output", "-o", type=str, required=True,
+    parser.add_argument("--output", "-o", type=str, default=None,
                         help="Output FASTA file for results")
     parser.add_argument("--config", "-c", type=str, default=None,
                         help="YAML configuration file (overrides CLI args)")
-    parser.add_argument("--checkpoint", type=str, required=True,
+    parser.add_argument("--checkpoint", type=str, default=None,
                         help="Path to model checkpoint directory")
 
     # RNA Type and Species Conditions
@@ -99,7 +99,15 @@ def parse_args():
     parser.add_argument("--verbose", action="store_true",
                         help="Print verbose output")
 
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    # Get parser defaults for config merging
+    parser_defaults = {}
+    for action in parser._actions:
+        if action.dest != 'help':
+            parser_defaults[action.dest] = action.default
+
+    return args, parser_defaults
 
 
 def load_config(config_path: str) -> dict:
@@ -108,11 +116,20 @@ def load_config(config_path: str) -> dict:
         return yaml.safe_load(f)
 
 
-def merge_config_with_args(config: dict, args) -> None:
-    """Merge YAML config with command line arguments."""
+def merge_config_with_args(config: dict, args, parser_defaults: dict) -> None:
+    """Merge YAML config with command line arguments.
+
+    Priority: CLI args > Config file > Parser defaults
+    """
     for key, value in config.items():
-        if value is not None and getattr(args, key, None) is None:
-            setattr(args, key, value)
+        if value is not None:
+            # Check if this argument was explicitly provided on command line
+            current_value = getattr(args, key, None)
+            default_value = parser_defaults.get(key)
+
+            # Only override if the current value is the default (not explicitly set by user)
+            if current_value == default_value:
+                setattr(args, key, value)
 
 
 def parse_mutate_positions(positions_str: str, seq_length: int) -> List[int]:
@@ -139,49 +156,77 @@ def parse_mutate_range(range_str: str, seq_length: int) -> List[int]:
     return list(range(start, end))
 
 
-def generate_mutations(sequence: str, positions: List[int]) -> List[Tuple[str, List[Tuple[int, str, str]]]]:
-    """Generate point mutation candidates.
+def generate_mutations_single_position(sequence: str, position: int) -> List[str]:
+    """Generate mutations for a single position.
 
     Args:
-        sequence: Input RNA sequence (e.g., "AUCG...")
-        positions: Positions to mutate
+        sequence: Input RNA sequence
+        position: Position to mutate
 
     Returns:
-        List of (mutated_sequence, mutation_records)
-        - mutation_records: [(position, original_base, new_base), ...]
+        List of 4 mutated sequences (including original base)
     """
     bases = ['A', 'U', 'C', 'G']
     candidates = []
-    mutation_records = []
 
-    # Generate all 4^len(positions) combinations
-    if len(positions) == 1:
-        # Single position - generate 4 candidates (one for each base)
-        pos = positions[0]
-        orig_base = sequence[pos]
-        for new_base in bases:
-            if new_base != orig_base:
-                mut_seq = sequence[:pos] + new_base + sequence[pos+1:]
-                candidates.append(mut_seq)
-                mutation_records.append([(pos, orig_base, new_base)])
-    else:
-        # Multiple positions - use recursion to generate combinations
-        def generate_recursive(idx: int, current_seq: str, current_records: List[Tuple[int, str, str]]):
-            if idx == len(positions):
-                candidates.append(current_seq)
-                mutation_records.append(current_records.copy())
-                return
+    for new_base in bases:
+        mut_seq = sequence[:position] + new_base + sequence[position+1:]
+        candidates.append(mut_seq)
 
-            pos = positions[idx]
-            orig_base = sequence[pos]
-            for new_base in bases:
-                if new_base != orig_base:
-                    new_seq = current_seq[:pos] + new_base + current_seq[pos+1:]
-                    generate_recursive(idx + 1, new_seq, current_records + [(pos, orig_base, new_base)])
+    return candidates
 
-        generate_recursive(0, sequence, [])
 
-    return candidates, mutation_records
+def generate_mutations_with_beam_search(
+    initial_sequence: str,
+    positions: List[int],
+    beam_width: int,
+    score_fn
+) -> List[str]:
+    """Generate mutations with incremental beam search to avoid exponential explosion.
+
+    Args:
+        initial_sequence: Starting RNA sequence
+        positions: Positions to mutate
+        beam_width: Maximum number of candidates to keep after each position
+        score_fn: Function to score candidates, takes List[str] and returns List[float]
+
+    Returns:
+        List of final candidate sequences (up to beam_width)
+    """
+    if not positions:
+        return [initial_sequence]
+
+    # Start with the initial sequence
+    current_candidates = [initial_sequence]
+
+    # Process each mutation position incrementally
+    for pos_idx, position in enumerate(positions):
+        print(f"  Processing mutation position {pos_idx + 1}/{len(positions)}: {position}")
+
+        # Generate mutations for all current candidates at this position
+        next_candidates = []
+        for candidate in current_candidates:
+            mutations = generate_mutations_single_position(candidate, position)
+            next_candidates.extend(mutations)
+
+        print(f"    Generated {len(next_candidates)} candidates")
+
+        # Apply beam search if we exceed beam_width
+        if len(next_candidates) > beam_width:
+            # Score all candidates
+            scores = score_fn(next_candidates)
+
+            # Sort by score and keep top beam_width
+            scored_pairs = list(zip(next_candidates, scores))
+            scored_pairs.sort(key=lambda x: x[1], reverse=True)
+            current_candidates = [seq for seq, _ in scored_pairs[:beam_width]]
+
+            print(f"    Beam search: kept top {len(current_candidates)} candidates")
+        else:
+            current_candidates = next_candidates
+            print(f"    Kept all {len(current_candidates)} candidates (< beam_width)")
+
+    return current_candidates
 
 
 def dynamic_beam_search(candidates: List[str], scores: List[float], beam_width: int,
@@ -384,17 +429,23 @@ class DirectedEvolution:
         positions = random.sample(range(seq_length), min(self.args.mutations_per_iter, seq_length))
         return sorted(positions)
 
-    def generate_candidate_sequences(self, positions: List[int]) -> Tuple[List[str], List[List]]:
-        """Generate candidate mutated sequences.
+    def generate_candidate_sequences(self, positions: List[int]) -> List[str]:
+        """Generate candidate mutated sequences with incremental beam search.
 
         Args:
             positions: Positions to mutate
 
         Returns:
-            Tuple of (candidate_sequences, mutation_records)
+            List of candidate sequences
         """
-        candidates, records = generate_mutations(self.input_sequence, positions)
-        return candidates, records
+        # Use the new beam search approach
+        candidates = generate_mutations_with_beam_search(
+            initial_sequence=self.input_sequence,
+            positions=positions,
+            beam_width=self.args.beam_width,
+            score_fn=self.score_candidates
+        )
+        return candidates
 
     def score_candidates(self, candidates: List[str]) -> List[float]:
         """Score candidates using LLM.
@@ -439,6 +490,9 @@ class DirectedEvolution:
         self.current_sequences = [self.input_sequence]
         self.current_scores = [0.0]  # Initial score is 0 (not evaluated)
 
+        # Candidate pool for collecting diverse sequences
+        candidate_pool = []  # List of (sequence, score) tuples
+
         temperature = self.args.T_init
         best_sequence = self.input_sequence
         best_score = float('-inf')
@@ -451,9 +505,9 @@ class DirectedEvolution:
             positions = self.select_mutate_positions()
             print(f"Mutating positions: {positions}")
 
-            # Step 2: Generate candidate sequences
-            candidates, mutation_records = self.generate_candidate_sequences(positions)
-            print(f"Generated {len(candidates)} candidates")
+            # Step 2: Generate candidate sequences with incremental beam search
+            candidates = self.generate_candidate_sequences(positions)
+            print(f"Generated {len(candidates)} candidates (after beam search)")
 
             # Step 3: Score candidates with LLM
             scores = self.score_candidates(candidates)
@@ -491,16 +545,22 @@ class DirectedEvolution:
                     accepted_sequences.append(seq)
                     accepted_scores.append(combined_score)
 
+                    # Add to candidate pool
+                    candidate_pool.append((seq, combined_score))
+
             # If no sequences accepted, keep the best beam candidate
             if not accepted_sequences:
                 best_seq, best_s = beam_candidates[0]
+                best_mfe = mfe_values[0]
+                combined = best_s - 0.1 * best_mfe
                 accepted_sequences = [best_seq]
-                accepted_scores = [best_s]
+                accepted_scores = [combined]
+                candidate_pool.append((best_seq, combined))
                 print("  (SA rejected all, keeping best beam candidate)")
 
-            # Update current pool
-            self.current_sequences = accepted_sequences[:self.args.output_count]
-            self.current_scores = accepted_scores[:self.args.output_count]
+            # Update current pool for next iteration
+            self.current_sequences = accepted_sequences[:self.args.beam_width]
+            self.current_scores = accepted_scores[:self.args.beam_width]
 
             # Track best
             if self.current_scores:
@@ -513,6 +573,8 @@ class DirectedEvolution:
                     best_sequence = current_best_seq
                     print(f"  New best: score={best_score:.4f}")
 
+            print(f"  Candidate pool size: {len(candidate_pool)}")
+
             # Log iteration
             self.log_entries.append({
                 'iteration': iteration + 1,
@@ -524,6 +586,34 @@ class DirectedEvolution:
 
             # Cool down
             temperature = max(self.args.T_min, temperature * self.args.cooling_rate)
+
+        # Final: Select top output_count sequences from candidate pool
+        print(f"\n{'='*60}")
+        print("Evolution Complete")
+        print(f"{'='*60}")
+        print(f"Best sequence score: {best_score:.4f}")
+        print(f"Total candidates in pool: {len(candidate_pool)}")
+
+        # Sort by score and select top sequences
+        candidate_pool.sort(key=lambda x: x[1], reverse=True)
+
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_candidates = []
+        for seq, score in candidate_pool:
+            if seq not in seen:
+                seen.add(seq)
+                unique_candidates.append((seq, score))
+
+        # Select top output_count
+        final_candidates = unique_candidates[:self.args.output_count]
+
+        self.current_sequences = [seq for seq, _ in final_candidates]
+        self.current_scores = [score for _, score in final_candidates]
+
+        print(f"Selected {len(self.current_sequences)} unique sequences for output")
+
+        return self.current_sequences, self.current_scores
 
         print(f"\n{'='*60}")
         print("Evolution Complete")
@@ -562,12 +652,20 @@ class DirectedEvolution:
 
 def main():
     """Main entry point."""
-    args = parse_args()
+    args, parser_defaults = parse_args()
 
     # Load config if provided
     if args.config:
         config = load_config(args.config)
-        merge_config_with_args(config, args)
+        merge_config_with_args(config, args, parser_defaults)
+
+    # Validate required arguments
+    if not args.input:
+        raise ValueError("--input is required (either via CLI or config file)")
+    if not args.output:
+        raise ValueError("--output is required (either via CLI or config file)")
+    if not args.checkpoint:
+        raise ValueError("--checkpoint is required (either via CLI or config file)")
 
     # Validate arguments
     if args.rna_type:
