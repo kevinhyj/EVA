@@ -15,6 +15,8 @@
 
 <div align="center">🧬 <i>A generative foundation model for universal RNA sequence modeling and design across all domains of life.</i></div>
 
+<br>
+
 **EVA** (Evolutionary Versatile Architect) is a generative RNA foundation model trained on **RNAVerse v1**, a curated atlas of 114 million full-length RNA sequences spanning all domains of life. Built on a 1.4B-parameter decoder-only Transformer with a Mixture-of-Experts (MoE) backbone and an 8,192-token context window, EVA unifies RNA sequence scoring and controllable design within a single framework.
 
 ## Why Use EVA?
@@ -67,28 +69,12 @@ You should also consider EVA for the reasons as follows:
     <td><b>Cross-molecule Scoring</b></td>
     <td>A single unified framework scores RNA, DNA coding regions, and proteins (via reverse translation), enabling consistent evaluation across molecule types</td>
   </tr>
+  <tr>
+    <td>🔧</td>
+    <td><b>Fine-tuning</b></td>
+    <td>Support is coming soon</td>
+  </tr>
 </table>
-
-<br>
-
-
-## Key Features
-
-<h3>🎯 Zero-shot Fitness Prediction</h3>
-
-Across RNA, DNA gene regions, and proteins via evolutionary likelihood scoring.
-
-<h3>🧬 Controllable Generation</h3>
-
-Across 11 RNA classes (mRNA, lncRNA, circRNA, tRNA, rRNA, miRNA, piRNA, sRNA, snRNA, snoRNA, viral RNA) conditioned on RNA type and taxonomic lineage — no task-specific fine-tuning required.
-
-<h3>🔄 Two Generation Modes</h3>
-
-Autoregressive CLM for de novo sequence design, and GLM (masked infilling) for targeted region redesign.
-
-<h3>🔧 Fine-tuning</h3>
-
-Support is coming soon.
 
 <br>
 
