@@ -13,7 +13,7 @@
 
 </div>
 
-<div align="center">🧬 <i>A generative foundation model for universal RNA sequence modeling and design across all domains of life.</i></div>
+<div align="center">🧬 <i>A long-context generative foundation model for universal RNA sequence modeling and design across all domains of life.</i></div>
 
 <br>
 
@@ -21,7 +21,7 @@
 
 ## Why Use EVA?
 
-**10x Closer to Nature Than Prior Methods — At Both Sequence and Structure Level.**
+**10x Higher Modeling Accuracy Than Ever Before — At Both Sequence and Structure Level.**
 
 <table>
   <tr>
@@ -40,39 +40,39 @@ You should also consider EVA for the reasons as follows:
 
 <table>
   <tr>
-    <td>✅</td>
-    <td><b>Universal RNA Coverage</b></td>
-    <td>Trained on RNAVerse v1 — 114M full-length RNA sequences across all domains of life (Eukaryota, Bacteria, Archaea, Viruses), not limited to specific organisms or RNA types</td>
+    <td>🔓</td>
+    <td><b>Fully Open-Sourced</b></td>
+    <td>All training data, model weights, and training details are publicly released — full transparency for the community to reproduce, build upon, and extend</td>
   </tr>
   <tr>
-    <td>✅</td>
-    <td><b>Zero-shot Fitness Prediction</b></td>
-    <td>Score RNA, DNA gene regions, and protein sequences via evolutionary likelihood — no task-specific fine-tuning needed</td>
+    <td>📏</td>
+    <td><b>8x Larger Context Window</b></td>
+    <td>8,192-token context window vs. ~1,024 in prior RNA models — enabling full-length RNA processing without truncation or information loss</td>
   </tr>
   <tr>
-    <td>✅</td>
-    <td><b>Controllable Generation</b></td>
-    <td>Generate across 11 RNA classes conditioned on RNA type and taxonomic lineage, enabling precise control over the biological context of designed sequences</td>
+    <td>🗄️</td>
+    <td><b>7x More Training Data</b></td>
+    <td>Trained on RNAVerse v1 — 114M full-length RNA sequences across all domains of life (Eukaryota, Bacteria, Archaea, Viruses), 7.7x larger than the RNAcentral v25.0</td>
   </tr>
   <tr>
-    <td>✅</td>
-    <td><b>Dual Generation Paradigms</b></td>
-    <td>Autoregressive CLM for de novo sequence design and GLM span infilling for targeted region redesign — two complementary modes in one model</td>
+    <td>🏆</td>
+    <td><b>SOTA Fitness Prediction</b></td>
+    <td>Achieves state-of-the-art zero-shot fitness prediction on ncRNA and mRNA, no task-specific fine-tuning needed</td>
   </tr>
   <tr>
-    <td>✅</td>
-    <td><b>Full-length & Long Context</b></td>
-    <td>8,192-token context window processes complete RNA sequences directly, avoiding information loss from truncation or fragmentation</td>
+    <td>🎯</td>
+    <td><b>10x+ RNA Generation Accuracy</b></td>
+    <td>Over 10x improvement in RNA generation accuracy at both sequence and structure level compared to prior methods</td>
   </tr>
   <tr>
-    <td>✅</td>
-    <td><b>Cross-molecule Scoring</b></td>
-    <td>A single unified framework scores RNA, DNA coding regions, and proteins (via reverse translation), enabling consistent evaluation across molecule types</td>
+    <td>🧬</td>
+    <td><b>11 RNA Types Supported</b></td>
+    <td>Controllable generation across 11 RNA classes (mRNA, tRNA, rRNA, lncRNA, snRNA, snoRNA, miRNA, and more) conditioned on RNA type and taxonomic lineage</td>
   </tr>
   <tr>
-    <td>🔧</td>
-    <td><b>Fine-tuning</b></td>
-    <td>Support is coming soon</td>
+    <td>⚙️</td>
+    <td><b>Novel Architecture, Capabilities & Training</b></td>
+    <td>1.4B-parameter MoE decoder-only Transformer with dual generation paradigms — CLM for de novo design & GLM for domain redesign — unified in a single model</td>
   </tr>
 </table>
 
@@ -243,19 +243,6 @@ Common species:
 
 ## Generation
 
-EVA achieves state-of-the-art zero-shot fitness prediction across both mRNA and ncRNA benchmarks, substantially outperforming existing RNA, codon, and DNA language models — including models with up to 40B parameters. This strong sequence-level understanding directly translates into high-quality generation: EVA's learned distribution faithfully captures the evolutionary constraints of natural RNA, enabling it to produce biologically realistic sequences out of the box.
-
-<table>
-  <tr>
-    <td align="center">
-      <img src="fig/mrna_performance_5datasets.svg" alt="Zero-shot mRNA Fitness Prediction" width="100%">
-    </td>
-    <td align="center">
-      <img src="fig/ncrna_performance.svg" alt="Zero-shot ncRNA Fitness Prediction" width="100%">
-    </td>
-  </tr>
-</table>
-
 ### CLM
 
 CLM (Causal Language Model) generates RNA sequences autoregressively from left to right. This is the primary generation mode in EVA.
@@ -404,6 +391,19 @@ python /eva/tools/generate.py \
 <br>
 
 ## Scoring
+
+EVA achieves state-of-the-art zero-shot fitness prediction across both mRNA and ncRNA benchmarks, substantially outperforming existing RNA, codon, and DNA language models — including models with up to 40B parameters. This strong sequence-level understanding directly translates into high-quality generation: EVA's learned distribution faithfully captures the evolutionary constraints of natural RNA, enabling it to produce biologically realistic sequences out of the box.
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="fig/mrna_performance_5datasets.svg" alt="Zero-shot mRNA Fitness Prediction" width="100%">
+    </td>
+    <td align="center">
+      <img src="fig/ncrna_performance.svg" alt="Zero-shot ncRNA Fitness Prediction" width="100%">
+    </td>
+  </tr>
+</table>
 
 Evaluate how well a given sequence fits the model's learned distribution by computing its log-likelihood. Higher (less negative) scores indicate more probable sequences.
 
