@@ -13,7 +13,7 @@
 
 </div>
 
-<div align="center">🧬 <i>A long-context generative foundation model for universal RNA sequence modeling and design across all domains of life.</i></div>
+<div align="center">🧬 <i>A long-context generative foundation model for universal RNA modeling and design.</i></div>
 
 <br>
 
@@ -21,22 +21,7 @@
 
 ## Why Use EVA?
 
-**10x Higher Modeling Accuracy Than Ever Before — At Both Sequence and Structure Level.**
-
-<table>
-  <tr>
-    <td align="center">
-      <img src="fig/RNA_landscape_modeling_comparison.svg" alt="RNA Landscape Modeling Comparison" width="100%">
-      <br><i>RNA landscape modeling comparison</i>
-    </td>
-    <td align="center">
-      <img src="fig/species_specific_RNA_landscape_modeling_comparison.svg" alt="Species-specific RNA Landscape Modeling Comparison" width="100%">
-      <br><i>Species-specific RNA landscape modeling comparison</i>
-    </td>
-  </tr>
-</table>
-
-You should also consider EVA for the reasons as follows:
+You should consider EVA for the reasons as follows:
 
 <table>
   <tr>
@@ -242,6 +227,21 @@ Common species:
 <br>
 
 ## Generation
+
+**10x Higher Modeling Accuracy Than Ever Before — At Both Sequence and Structure Level.**
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="fig/RNA_landscape_modeling_comparison.svg" alt="RNA Landscape Modeling Comparison" width="100%">
+      <br><i>RNA landscape modeling comparison</i>
+    </td>
+    <td align="center" width="50%">
+      <img src="fig/species_specific_RNA_landscape_modeling_comparison.svg" alt="Species-specific RNA Landscape Modeling Comparison" width="100%">
+      <br><i>Species-specific modeling comparison</i>
+    </td>
+  </tr>
+</table>
 
 ### CLM
 
