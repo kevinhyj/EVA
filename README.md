@@ -19,9 +19,6 @@
 
 **EVA** (Evolutionary Versatile Architect) is a generative RNA foundation model trained on **OpenRNA v1**, a curated atlas of 114 million full-length RNA sequences spanning all domains of life. Built on a 1.4B-parameter decoder-only Transformer with a Mixture-of-Experts (MoE) backbone and an 8,192-token context window, EVA unifies RNA sequence scoring and controllable design within a single framework.
 
-<div align="center">
-  <img src="fig/fig1A.svg" alt="EVA Overview" width="450">
-</div>
 
 ## Why Use EVA?
 
@@ -189,10 +186,6 @@ EVA supports conditioning on **RNA type** and **species/lineage** for both gener
 
 ### RNA Types
 
-<div align="center">
-  <img src="fig/rnatpye_generation.svg" alt="RNA Type Generation" width="800">
-</div>
-
 | RNA Type | Description |
 |----------|-------------|
 | mRNA | Messenger RNA - carries genetic information from DNA to ribosomes |
@@ -208,10 +201,6 @@ EVA supports conditioning on **RNA type** and **species/lineage** for both gener
 | viral_RNA | RNA from viruses |
 
 ### Species/Lineage
-
-<div align="center">
-  <img src="fig/species_generation.svg" alt="Species Generation" width="800">
-</div>
 
 Species can be specified in three ways: `--taxid`, `--species`, or `--lineage` (Greengenes format).
 
@@ -646,7 +635,8 @@ Some large files are not included in this repository due to size constraints. Th
 | Resource | Description | Size | Source |
 |----------|-------------|------|--------|
 | Model Checkpoint | EVA 1.4B (MoE) pre-trained weights | <!-- TODO --> | [HuggingFace](https://huggingface.co/GENTEL-Lab/EVA) |
-| Docker Image (`eva_latest.tar.gz`) | Pre-built EVA runtime environment | <!-- TODO --> | [Zenodo](<!-- TODO -->) |
+| Docker Image (`eva_latest.tar.gz`) | Pre-built EVA runtime environment | <!-- TODO --> | [Zenodo](https://doi.org/10.5281/zenodo.18786990) |
+| Training Data | OpenRNA v1 — 114M full-length RNA sequences | <!-- TODO --> | [HuggingFace](https://huggingface.co/datasets/GENTEL-Lab/OpenRNA-v1-114M) |
 
 ### Experiment & Benchmark Data
 
