@@ -1,7 +1,7 @@
 # EVA: A Long-Context Generative Foundation Model Deciphers RNA Design Principles
 
 <div align="center">
-  <img src="fig/github_logo.svg" alt="RNAVerse" width="800">
+  <img src="fig/github_logo.svg" alt="OpenRNA" width="800">
 </div>
 
 <div align="center">
@@ -17,7 +17,11 @@
 
 <br>
 
-**EVA** (Evolutionary Versatile Architect) is a generative RNA foundation model trained on **RNAVerse v1**, a curated atlas of 114 million full-length RNA sequences spanning all domains of life. Built on a 1.4B-parameter decoder-only Transformer with a Mixture-of-Experts (MoE) backbone and an 8,192-token context window, EVA unifies RNA sequence scoring and controllable design within a single framework.
+**EVA** (Evolutionary Versatile Architect) is a generative RNA foundation model trained on **OpenRNA v1**, a curated atlas of 114 million full-length RNA sequences spanning all domains of life. Built on a 1.4B-parameter decoder-only Transformer with a Mixture-of-Experts (MoE) backbone and an 8,192-token context window, EVA unifies RNA sequence scoring and controllable design within a single framework.
+
+<div align="center">
+  <img src="fig/fig1A.svg" alt="EVA Overview" width="450">
+</div>
 
 ## Why Use EVA?
 
@@ -37,7 +41,7 @@ You should consider EVA for the reasons as follows:
   <tr>
     <td>🗄️</td>
     <td><b>7x More Training Data</b></td>
-    <td>Trained on RNAVerse v1 — 114M full-length RNA sequences across all domains of life (Eukaryota, Bacteria, Archaea, Viruses), 7.7x larger than the RNAcentral v25.0</td>
+    <td>Trained on OpenRNA v1 — 114M full-length RNA sequences across all domains of life (Eukaryota, Bacteria, Archaea, Viruses), 7.7x larger than the RNAcentral v25.0</td>
   </tr>
   <tr>
     <td>🏆</td>
@@ -263,6 +267,10 @@ python /eva/tools/generate.py \
 
 EVA supports conditioning on **RNA type**, **species** (via TaxID, species name, or lineage string), or both. See [Condition Control](#condition-control) for the full list of supported RNA types and species.
 
+<div align="center">
+  <img src="fig/rnatype_generation.png" alt="RNA Type Generation" width="800">
+</div>
+
 ```bash
 # RNA type only
 python /eva/tools/generate.py \
@@ -291,6 +299,10 @@ python /eva/tools/generate.py \
 ```
 
 Species can also be specified via `--species homo_sapiens` or `--lineage "D__Eukaryota;P__Chordata;..."` in Greengenes format.
+
+<div align="center">
+  <img src="fig/species_generation.png" alt="Species Generation" width="800">
+</div>
 
 #### Continuation Mode
 
@@ -440,6 +452,25 @@ python /eva/tools/predict.py \
 ## Directed Evolution
 
 EVA supports in-silico directed evolution — an iterative optimization pipeline that improves a given RNA sequence through cycles of mutation, LLM-based fitness scoring, and structural stability evaluation. Starting from an existing RNA sequence, EVA applies point mutations at specified positions, scores each mutant by log-likelihood and Minimum Free Energy (MFE via LinearFold), and uses simulated annealing with dynamic beam search to balance exploration and exploitation. Over multiple rounds the temperature cools to converge on optimized sequences, and the top N candidates ranked by combined LLM + MFE score are returned.
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="fig/circRNA_illustration.svg" alt="circRNA Illustration" width="100%">
+    </td>
+    <td align="center" width="50%">
+      <img src="fig/mRNA_optimization_illustration.svg" alt="mRNA Optimization Illustration" width="100%">
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="fig/combined_circRNA_2x2_optimization.svg" alt="circRNA 2x2 Optimization" width="100%">
+    </td>
+    <td align="center" width="50%">
+      <img src="fig/combined_mRNA_2x2_optimization.svg" alt="mRNA 2x2 Optimization" width="100%">
+    </td>
+  </tr>
+</table>
 
 ### Usage
 
