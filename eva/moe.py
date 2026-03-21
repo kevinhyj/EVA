@@ -97,6 +97,7 @@ class SparseMoeBlock(nn.Module):
 
         # Dense mixture of experts
         if self.n_experts == self.top_k:
+            hidden_states = hidden_states.view(-1, dim)  # [B*L, D]
             routing_weights = routing_weights.unsqueeze(1)
             final_hidden_states = torch.stack([e(hidden_states) for e in self.experts], dim=-1)
             final_hidden_states = torch.einsum("lde,lde->ld", final_hidden_states, routing_weights)
