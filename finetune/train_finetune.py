@@ -38,13 +38,15 @@ from tqdm import tqdm
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from model.causal_lm import create_rnagen_model
-from model.config import RNAGenConfig
-from model.lineage_tokenizer import get_lineage_rna_tokenizer
-from data.lineage_dataset import create_lineage_dataset, SpanConfig
-from data.rna_collator import create_rna_data_collator
-from utils.memory import MemoryManager, create_memory_manager
-from utils.logging import create_logger
+from eva.causal_lm import create_eva_model
+from eva.config import EvaConfig
+from eva.lineage_tokenizer import get_lineage_rna_tokenizer
+
+# 使用本地 utils 模块
+from finetune.utils.lineage_dataset import create_lineage_dataset, SpanConfig
+from finetune.utils.rna_collator import create_rna_data_collator
+from finetune.utils.memory import MemoryManager, create_memory_manager
+from finetune.utils.logging import create_logger
 
 # Configure basic logging to ensure logger.info outputs to stdout
 logging.basicConfig(
@@ -218,14 +220,33 @@ class FinetuneTrainer:
             if load_result.unexpected_keys:
                 logger.warning(f"Unexpected keys ({len(load_result.unexpected_keys)}): {load_result.unexpected_keys[:5]}...")
 
+            # Fix: detect shape mismatches that strict=False silently ignores
+            shape_mismatches = []
+            current_state = self.model.state_dict()
+            for k, v in model_state_dict.items():
+                if k in current_state and current_state[k].shape != v.shape:
+                    shape_mismatches.append(
+                        f"{k}: checkpoint={v.shape}, model={current_state[k].shape}"
+                    )
+            if shape_mismatches:
+                logger.warning(f"Shape mismatches detected ({len(shape_mismatches)} keys) — "
+                               f"these were silently skipped by strict=False:")
+                for m in shape_mismatches[:5]:
+                    logger.warning(f"  {m}")
+                if len(shape_mismatches) > 5:
+                    logger.warning(f"  ... and {len(shape_mismatches) - 5} more")
+
             pretrain_step = metadata.get('global_step', 0)
 
             load_time = time.time() - load_start_time
             logger.info(f"Pretrained checkpoint loaded successfully, took: {load_time:.2f}s")
 
             # Extract step number from checkpoint path as offset
+            # Search both the file stem and parent directory name to handle all naming conventions
             checkpoint_name = checkpoint_path.stem
-            match = re.search(r'checkpoint[-_]?(\d+)', checkpoint_name)
+            parent_name = checkpoint_path.parent.name
+            match = re.search(r'checkpoint[-_]?(\d+)', checkpoint_name) or \
+                    re.search(r'checkpoint[-_]?(\d+)', parent_name)
             if match:
                 self.checkpoint_step_offset = int(match.group(1))
             elif pretrain_step > 0:
@@ -328,8 +349,8 @@ class FinetuneTrainer:
             model_config_dict['moe_world_size'] = 1  # 强制设为1，单卡不支持专家并行
             logger.info("⚠️ 单卡模式：MegaBlocks moe_world_size 强制设为 1")
 
-        model_config = RNAGenConfig(tokenizer=self.tokenizer, **model_config_dict)
-        self.model = create_rnagen_model(model_config)
+        model_config = EvaConfig(tokenizer=self.tokenizer, **model_config_dict)
+        self.model = create_eva_model(model_config)
         logger.info(f"模型创建完成，设备: cuda:{self.local_rank}")
 
         # Finetune特性：显示EOS loss权重配置
@@ -531,6 +552,7 @@ class FinetuneTrainer:
             if current_step < num_warmup_steps:
                 return float(current_step) / float(max(1, num_warmup_steps))
             progress = float(current_step - num_warmup_steps) / float(max(1, num_training_steps - num_warmup_steps))
+            progress = min(progress, 1.0)  # Fix: clamp to [0,1] so lr never drops below min_lr_ratio
             cosine_decay = 0.5 * (1.0 + math.cos(math.pi * progress))
             return min_lr_ratio + (1.0 - min_lr_ratio) * cosine_decay
 

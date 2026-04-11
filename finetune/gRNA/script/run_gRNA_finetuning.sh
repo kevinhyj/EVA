@@ -67,6 +67,7 @@ log_section() {
 # 参数初始化
 GPU_ID=${DEFAULT_GPU_ID}
 CONTAINER_NAME=${DEFAULT_CONTAINER_NAME}
+HOST_LOG_DIR=""  # 宿主机日志目录（可选）
 
 # 参数解析和显示帮助
 usage() {
@@ -88,9 +89,11 @@ gRNA微调训练启动脚本（单卡版本）
 
 可选选项：
     --config CONFIG_FILE        直接指定配置文件路径（优先级高于实验目录）
-                                支持宿主机路径或容器路径
+                                支持宿主机路径��容器路径
     --gpu GPU_ID                指定使用的GPU编号 (默认: ${DEFAULT_GPU_ID})
     --container CONTAINER       容器名称 (默认: ${DEFAULT_CONTAINER_NAME})
+    --log-dir LOG_DIR           日志保存目录（宿主机路径）
+                                默认: 项目根目录/results/logs/gRNA_finetuning
     --help                      显示此帮助信息
 
 示例：
@@ -119,6 +122,14 @@ gRNA微调训练启动脚本（单卡版本）
     - resume_from_pretrain: 预训练模型路径
 
 EOF
+}
+
+# 转换宿主机路径到容器内路径
+host_to_container_path() {
+    local host_path="$1"
+    # 将 /data/yanjie_huang/eva/EVA1 转换为 /eva
+    local container_path="${host_path/data\/yanjie_huang\/eva\/EVA1/eva}"
+    echo "$container_path"
 }
 
 # 检查容器状态
@@ -150,6 +161,10 @@ main() {
                 ;;
             --container)
                 CONTAINER_NAME="$2"
+                shift 2
+                ;;
+            --log-dir)
+                HOST_LOG_DIR="$2"
                 shift 2
                 ;;
             --help)
@@ -239,28 +254,41 @@ main() {
     fi
 
     # 检查配置文件是否存在
-    if ! docker exec ${CONTAINER_NAME} test -f "$CONFIG_FILE"; then
-        log_error "配置文件不存在: $CONFIG_FILE"
-        log_info "请确保实验目录下有 experiment_config.yaml"
+    CONTAINER_CONFIG_FILE=$(host_to_container_path "$CONFIG_FILE")
+    if ! docker exec ${CONTAINER_NAME} test -f "$CONTAINER_CONFIG_FILE"; then
+        log_error "配置文件不存在: $CONTAINER_CONFIG_FILE"
+        log_info "宿主机路径: $CONFIG_FILE"
         exit 1
     fi
 
     # 创建输出目录
     create_output_dirs
 
-    # 训练命令（单卡模式，使用python直接运行）
-    TRAIN_CMD="cd ${PROJECT_ROOT} && CUDA_VISIBLE_DEVICES=${GPU_ID} python \
+    # 训练命令（单卡模式，使用容器内路径）
+    CONTAINER_PROJECT_ROOT="/eva"
+    TRAIN_CMD="cd ${CONTAINER_PROJECT_ROOT} && CUDA_VISIBLE_DEVICES=${GPU_ID} /composer-python/python \
         finetune/train_finetune.py \
-        --config=$CONFIG_FILE"
+        --config=$CONTAINER_CONFIG_FILE"
 
     # 日志文件
-    LOG_DIR="${PROJECT_ROOT}/results/logs/gRNA_finetuning"
-    mkdir -p "$LOG_DIR"
+    if [ -n "$HOST_LOG_DIR" ]; then
+        # 使用用户指定的日志目录（宿主机路径）
+        LOG_DIR="$HOST_LOG_DIR"
+        mkdir -p "$LOG_DIR"
+        # 转换为容器内路径用于显示
+        CONTAINER_LOG_DIR="${LOG_DIR/data\/yanjie_huang\/eva\/EVA1/eva}"
+    else
+        # 使用默认日志目录
+        LOG_DIR="${PROJECT_ROOT}/results/logs/gRNA_finetuning"
+        mkdir -p "$LOG_DIR"
+        CONTAINER_LOG_DIR="$LOG_DIR"
+    fi
     LOG_FILE="${LOG_DIR}/gRNA_finetuning_$(date +%Y%m%d_%H%M%S).log"
 
     echo ""
     log_info "训练配置:"
-    log_info "  - 配置文件: $CONFIG_FILE"
+    log_info "  - 配置文件(宿主机): $CONFIG_FILE"
+    log_info "  - 配置文件(容器): $CONTAINER_CONFIG_FILE"
     log_info "  - 日志文件: $LOG_FILE"
     log_info "  - GPU编号: ${GPU_ID}"
     log_info "  - 任务类型: gRNA微调（单卡全参数微调）"
@@ -295,7 +323,10 @@ main() {
     log_info "  - GPU状态: docker exec ${CONTAINER_NAME} nvidia-smi"
     echo ""
     log_info "训练将输出到:"
-    log_info "  - 模型检查点: ${PROJECT_ROOT}/results/gRNA_finetuning/"
+    log_info "  - 日志文件(宿主机): $LOG_FILE"
+    log_info "  - 日志文件(容器): $(host_to_container_path "$LOG_FILE")"
+    log_info "  - 模型检查点(宿主机): ${LOG_DIR/data\/yanjie_huang\/eva\/EVA1/eva}"
+    log_info "  - 模型检查点(容器): /eva/temp/test_result/fintune_grna_m16"
     echo ""
 }
 
