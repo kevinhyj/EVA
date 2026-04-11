@@ -6,6 +6,7 @@ Replicates the style from the reference image showing API vs Enrichment Ratio.
 
 import matplotlib.pyplot as plt
 import numpy as np
+from pathlib import Path
 
 # Set font to Arial
 plt.rcParams['font.family'] = 'Arial'
@@ -104,11 +105,12 @@ plt.tight_layout()
 # Set transparent background before saving
 fig.patch.set_alpha(0)
 
-# Save the figure
-plt.savefig('/Users/hyj/Downloads/rnaverse/paint/rna_api_enrichment.svg', format='svg', dpi=300, bbox_inches='tight')
-plt.savefig('/Users/hyj/Downloads/rnaverse/paint/rna_api_enrichment.png', dpi=300, bbox_inches='tight', transparent=True)
+# Save the figure next to this script
+output_base = Path(__file__).resolve().parent / 'rna_api_enrichment'
+plt.savefig(output_base.with_suffix('.svg'), format='svg', dpi=300, bbox_inches='tight')
+plt.savefig(output_base.with_suffix('.png'), dpi=300, bbox_inches='tight', transparent=True)
 
 print("Plot saved successfully!")
 print("Files saved:")
-print("  - /Users/hyj/Downloads/rnaverse/paint/rna_api_enrichment.svg")
-print("  - /Users/hyj/Downloads/rnaverse/paint/rna_api_enrichment.png")
+print(f"  - {output_base.with_suffix('.svg')}")
+print(f"  - {output_base.with_suffix('.png')}")
