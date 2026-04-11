@@ -1,13 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/_ensure_eva_container.sh"
+sae_require_eva_container "${BASH_SOURCE[0]}" "$@"
+
 METHOD="${1:-batch_topk}"
 if [[ "$METHOD" != "batch_topk" && "$METHOD" != "sae_l1_penalty" ]]; then
   echo "Usage: $0 [batch_topk|sae_l1_penalty]" >&2
   exit 1
 fi
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/_resolve_paths.sh"
 resolve_sae_paths "$METHOD"
 

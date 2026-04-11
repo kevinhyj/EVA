@@ -1,8 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
-PYTHON_BIN="${PYTHON_BIN:-python3}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/_ensure_eva_container.sh"
+sae_require_eva_container "${BASH_SOURCE[0]}" "$@"
+
+PYTHON_BIN="${PYTHON_BIN:-python3}"
 source "$SCRIPT_DIR/_resolve_paths.sh"
 resolve_sae_paths "sae_l1_penalty"
 

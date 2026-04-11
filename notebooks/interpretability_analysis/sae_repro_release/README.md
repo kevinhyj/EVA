@@ -18,7 +18,20 @@ pip install -r notebooks/interpretability_analysis/sae_repro_release/requirement
 
 ### Option B: Docker (recommended)
 
-Build from repo root:
+For this workspace, the `.sh` scripts default to running inside the existing `eva1`
+container mounted at `/eva`, so you can execute them directly from the host:
+
+```bash
+bash notebooks/interpretability_analysis/sae_repro_release/scripts/run_all_smoke.sh
+```
+
+Override the container name only if needed:
+
+```bash
+CONTAINER_NAME=eva1 bash notebooks/interpretability_analysis/sae_repro_release/scripts/run_all_smoke.sh
+```
+
+If you need a dedicated image instead, build from repo root:
 
 ```bash
 cd /path/to/EVA1
