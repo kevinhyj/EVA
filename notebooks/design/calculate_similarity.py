@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """
-使用与filter_fasta_by_length_similarity.sh相同的方法计算序列相似度
+使用与filter_fasta_by_length_similarity.sh相同的方法计算序列相似度。
+
+默认输入文件基于脚本所在目录解析，避免依赖机器相关的绝对路径。
 """
+
+from argparse import ArgumentParser
+from pathlib import Path
 
 def calculate_similarity(seq1, seq2):
     """计算两条序列的相似度（基于Needleman-Wunsch全局比对或简单匹配）"""
@@ -41,18 +46,46 @@ def read_fasta(filename):
     seq = ''.join(line.strip() for line in lines[1:])
     return header, seq.upper().replace('T', 'U')
 
+BASE_DIR = Path(__file__).resolve().parent
+DEFAULT_SEQ1 = BASE_DIR / 'data' / 'gRNA' / 'designed_wrna.fasta'
+DEFAULT_SEQ2 = BASE_DIR / 'data' / 'gRNA' / 'm16_WT.fasta'
+
+
+def parse_args():
+    parser = ArgumentParser(description='计算两条 RNA 序列的相似度')
+    parser.add_argument(
+        '--seq1',
+        type=Path,
+        default=DEFAULT_SEQ1,
+        help='第一条 FASTA 序列路径，默认相对脚本目录',
+    )
+    parser.add_argument(
+        '--seq2',
+        type=Path,
+        default=DEFAULT_SEQ2,
+        help='第二条 FASTA 序列路径，默认相对脚本目录',
+    )
+    return parser.parse_args()
+
+
+args = parse_args()
+seq1_path = args.seq1.expanduser().resolve()
+seq2_path = args.seq2.expanduser().resolve()
+
 # 读取两个序列
-header1, seq1 = read_fasta('/storage9920/home/yanjie.huang/RNAVerse/notebooks/design/data/gRNA/designed_wrna.fasta')
-header2, seq2 = read_fasta('/storage9920/home/yanjie.huang/RNAVerse/notebooks/design/data/gRNA/m16_WT.fasta')
+header1, seq1 = read_fasta(seq1_path)
+header2, seq2 = read_fasta(seq2_path)
 
 print("=" * 60)
 print("序列相似度计算")
 print("=" * 60)
 print(f"\n序列1: {header1}")
+print(f"文件: {seq1_path}")
 print(f"长度: {len(seq1)} nt")
 print(f"序列: {seq1}\n")
 
 print(f"序列2: {header2}")
+print(f"文件: {seq2_path}")
 print(f"长度: {len(seq2)} nt")
 print(f"序列: {seq2}\n")
 
