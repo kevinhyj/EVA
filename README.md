@@ -9,7 +9,7 @@
 [![Paper](https://img.shields.io/badge/Paper-Paper-blue)](https://www.biorxiv.org/content/10.64898/2026.03.17.712398v1)
 [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-EVA-ffc107)](https://huggingface.co/GENTEL-Lab/EVA)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Website](https://img.shields.io/badge/Website-EVA-green)](http://223.109.239.35:3001/)
+[![Website](https://img.shields.io/badge/Website-EVA-green)](https://evabio.net/)
 
 </div>
 
